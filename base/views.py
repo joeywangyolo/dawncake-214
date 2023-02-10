@@ -1,13 +1,69 @@
 from django.shortcuts import render, redirect
 from . models import User
 from . forms import CustomUserCreationForm
+from . serializers import UserSerializer, UserSerializerWithToken
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from PIL import Image
 from django.contrib.auth.hashers import make_password
+from rest_framework import status
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib import messages
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        serializer = UserSerializerWithToken(self.user).data
+        for k, v in serializer.items():
+            data[k] = v
+        return data
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+@api_view(['POST'])
+def registerUser(request):
+    data = request.data
+    try:
+        user = User.objects.create(
+            first_name=data['name'],
+            username=data['email'],
+            email=data['email'],
+            password=make_password(data['password'])
+        )
+
+        serializer = UserSerializerWithToken(user, many=False)
+        return Response(serializer.data)
+    except:
+        message = {'detail': 'User with this email already exists'}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getUserProfile(request):
+    user = request.user
+    serializer = UserSerializer(user, many=False)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def getUsers(request):
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
+    
 
 
 def login_page(request):
@@ -22,7 +78,7 @@ def login_page(request):
         if user is not None:
             login(request, user)
             messages.info(request, 'U successfully logged in')
-            return redirect('home')
+            return redirect('index')
         else:
             messages.error(request, 'Email OR Passwor is incorrect')
             return redirect('login')
@@ -40,7 +96,7 @@ def register_page(request):
             user.save()
             login(request, user)
             messages.success(request, 'Your account was created')
-            return redirect('home')
+            return redirect('index')
         else:
             messages.error(request, 'An error occurred during registration')
     
