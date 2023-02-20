@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 # from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from base.models import Product,Item
 
 User = get_user_model()
 
@@ -24,18 +25,23 @@ class UserSerializer(serializers.ModelSerializer):
         if name == '':
             name = obj.email
         return name
-    
-# class UserSerializerWithToken(UserSerializer):
-#     token = serializers.SerializerMethodField(read_only=True)
 
-#     class Meta:
-#         model = User
-#         fields = ['id', 'username', 'email', 'name', 'isAdmin', 'token']
+class ItemSerializer(serializers.ModelSerializer):
+    author =UserSerializer(read_only=True)
+    class Meta:
+        model = Item
+        fields ='__all__'
 
-#     def get_token(self, obj):
-#         token = RefreshToken.for_user(obj)
-#         return str(token.access_token)
+class UserDescSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name", "email"]
+class productSerializer(serializers.HyperlinkedModelSerializer):
+    # author = UserDescSerializer(read_only=True)
 
+    class Meta:
+        model = Item
+        fields = '__all__'
 
    
 

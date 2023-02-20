@@ -1,9 +1,11 @@
-from django.urls import path
+from django.urls import path,include
 from django.urls import re_path as url
 from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('Item_list/', views.ItemList.as_view(),name='itemList'),
+    path('Item_list/<int:pk>/', views.ItemDetails.as_view(),name='itemDetails'),
     path('group/', views.group, name='group'),
     path('events/', views.events, name='events'),
     path('plans/', views.plans, name='plans'),

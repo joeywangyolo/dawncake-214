@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from . models import User
+from base.models import User,Product,Item
 from . forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -8,8 +8,39 @@ from django.contrib.auth.hashers import make_password
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib import messages
 import datetime
+from base.models import Product
+import json
+from django.http import JsonResponse,Http404
+from rest_framework import viewsets,status,mixins,generics
+from rest_framework.permissions import *
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from .serializers import ItemSerializer,productSerializer
 
 
+class ItemList(generics.ListCreateAPIView):
+    """ 
+    List / Creat
+    """
+    queryset =Item.objects.all()
+    serializer_class =ItemSerializer
+class ItemDetails(generics.RetrieveUpdateDestroyAPIView):
+    """ 
+    Retrieve / UPdate / Destroy
+    """
+    queryset =Item.objects.all()
+    serializer_class =ItemSerializer
+
+
+class ItemViewset(viewsets.ModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = productSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # serializer.save(author =self.request.user)
+        serializer.save()
 
 
 def login_page(request):
